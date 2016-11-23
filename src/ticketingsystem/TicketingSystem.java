@@ -3,11 +3,11 @@ package ticketingsystem;
 class Ticket{
 	long tid;
 	String passenger;
-	int route;
-	int coach;
-	int seat;
-	int departure;
-	int arrival;
+	int route;           //列车车次
+	int coach;           //车厢号
+	int seat;            //座位号
+	int departure;       //出发站编号
+	int arrival;         //到达站编号
 }
 
 public interface TicketingSystem{
