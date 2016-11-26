@@ -1,8 +1,7 @@
 package ticketingsystem;
 
-import java.nio.file.attribute.FileOwnerAttributeView;
+import java.util.Vector;
 import java.util.concurrent.locks.*;
-
 
 public class TicketingDS implements TicketingSystem{
 	
@@ -11,7 +10,8 @@ public class TicketingDS implements TicketingSystem{
 	private int seatnum;       //每节车厢的座位数
 	private int stationnum;    //每个车次经停站的数量
 	private int sumSeat;       //每个车次列车的总座位数
-	private int [][]sellTiketNum;    //关于各个车次每一个经停站有多少票被卖出
+	//private int [][]sellTiketNum;    //关于各个车次每一个经停站有多少票被卖出
+	private Vector<Ticket> sellTicket;
 	private boolean [][][]seatMap;
 	private ReentrantReadWriteLock []lock;
 	private long tid;
@@ -23,9 +23,21 @@ public class TicketingDS implements TicketingSystem{
 		seatnum=100;
 		stationnum=10;
 		sumSeat=coachnum*seatnum;
-		sellTiketNum=new int [routenum][stationnum];
+		//sellTiketNum=new int [routenum][stationnum];
 		lock=new ReentrantReadWriteLock[routenum];
+		sellTicket=new Vector<Ticket>();
+		for(int i=0;i<routenum;i++){
+			lock[i]=new ReentrantReadWriteLock();
+		}
 		seatMap=new boolean[routenum][sumSeat][stationnum];
+		//Arrays.fill(seatMap, false);
+		for(int i=0;i<routenum;i++){
+			for(int j=0;j<sumSeat;j++){
+				for(int k=0;k<stationnum;k++){
+					seatMap[i][j][k]=false;
+				}
+			}
+		}
 		tid=0;
 	}
 	
@@ -37,53 +49,76 @@ public class TicketingDS implements TicketingSystem{
 		this.stationnum=stationnum;
 		sumSeat=coachnum*seatnum;
 //		sellTiketNum=new int [routenum][stationnum];
+		sellTicket=new Vector<Ticket>();
 		lock=new ReentrantReadWriteLock[routenum];
+		for(int i=0;i<routenum;i++){
+			lock[i]=new ReentrantReadWriteLock();
+		}
 		seatMap=new boolean[routenum][sumSeat][stationnum];
+		//Arrays.fill(seatMap, false);
+		for(int i=0;i<routenum;i++){
+			for(int j=0;j<sumSeat;j++){
+				for(int k=0;k<stationnum;k++){
+					seatMap[i][j][k]=false;
+				}
+			}
+		}
 		tid=0;
+	}
+	
+	public Vector<Ticket> getSellTicket(){
+		return sellTicket;
 	}
 	
 	@Override
 	public Ticket buyTicket(String passenger, int route, int departure, int arrival) {
 		//所有要买的票本身有问题的情况
 		if(route<0||route>routenum||departure>=arrival||departure<0
-				||departure>stationnum-1||arrival<2||arrival>stationnum)
+				||departure>stationnum-1||arrival<2||arrival>stationnum){
+			//System.out.println("买票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",买票失败");
 			return null;
-		int max=0;
+		}
+		//int max=0;
 		Lock wlock=lock[route-1].writeLock();
 		wlock.lock();
 		try {
-			for(int i=departure;i<arrival;i++)  
-				max = sellTiketNum[route-1][i-1]>max?  sellTiketNum[route-1][i-1]:max;
-			if (max>=seatnum){
-				return null;
-			}else{
+//			for(int i=departure;i<arrival;i++)  
+//				max = sellTiketNum[route-1][i-1]>max?  sellTiketNum[route-1][i-1]:max;
+//			if (max>=seatnum){
+//				return null;
+//			}else{
 //				for(int i=departure;i<arrival;i++)
 //					++sellTiketNum[route-1][i-1];
-				Ticket ticket = new Ticket();
-				ticket.tid=tid++;
-				ticket.passenger=passenger;
-				ticket.route=route;
-				int i,j;
-				for(i=0;i<sumSeat;i++){
-					for(j=departure;j<arrival;j++){
-						if (seatMap[route-1][i][j-1]==true) {
-							break;
-						}
-					}
-					if (j==arrival) {
+				
+			int i,j;
+			for(i=0;i<sumSeat;i++){
+				for(j=departure;j<arrival;j++){
+					if (seatMap[route-1][i][j-1]==true) {
 						break;
 					}
 				}
-				if(i==sumSeat)  //找不到位置相当于没有票---买票失败
-					return null;
-				for(j=departure;j<arrival;j++)
-					seatMap[route-1][i][j-1]=true;
-				ticket.coach=i/seatnum+1;
-				ticket.seat=i%seatnum+1;
-				ticket.departure=departure;
-				ticket.arrival=arrival;
-				return ticket;
-			}	
+				if (j==arrival) {
+					break;
+				}
+			}
+			if(i==sumSeat){  //找不到位置相当于没有票---买票失败
+				//System.out.println("买票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",票已经卖完");
+				return null;
+			}
+			for(j=departure;j<arrival;j++)
+				seatMap[route-1][i][j-1]=true;
+			Ticket ticket = new Ticket();
+			ticket.tid=tid++;
+			ticket.passenger=passenger;
+			ticket.route=route;
+			ticket.coach=i/seatnum+1;
+			ticket.seat=i%seatnum+1;
+			ticket.departure=departure;
+			ticket.arrival=arrival;
+			sellTicket.add(ticket);
+			//System.out.println("买票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",买票成功");
+			return ticket;
+//			}	
 		} finally {
 			wlock.unlock();
 		}
@@ -93,9 +128,11 @@ public class TicketingDS implements TicketingSystem{
 	public int inquiry(int route, int departure, int arrival) {
 		//所有询问的票本身有问题的情况
 		if(route<0||route>routenum||departure>=arrival||departure<0
-				||departure>stationnum-1||arrival<2||arrival>stationnum)
+				||departure>stationnum-1||arrival<2||arrival>stationnum){
+			//System.out.println("查票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",查票失败");
 			return -1;
-		int max=0;
+		}
+	//	int max=0;
 		int count=0;
 		Lock rlock=lock[route-1].readLock();
 		rlock.lock();
@@ -111,6 +148,7 @@ public class TicketingDS implements TicketingSystem{
 					++count;
 				}
 			}
+			//System.out.println("查票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",余票"+count);
 			return count;
 //			for(int i=departure;i<arrival;i++)  //获取所经过的经停站卖出去的票数最多的数值
 //				max = sellTiketNum[route-1][i-1]>max?  sellTiketNum[route-1][i-1]:max;
@@ -123,17 +161,22 @@ public class TicketingDS implements TicketingSystem{
 
 	@Override
 	public boolean refundTicket(Ticket ticket) {
-		if (ticket.tid>tid) 
+		if (!sellTicket.contains(ticket)){ 
+			//System.out.println("退票:票号-"+ticket.tid+",没有这样的票");
 			return false;
-		Lock wlock=lock[ticket.route-1].writeLock();
-		wlock.lock();
-		try {
-			int seat=(ticket.coach-1)*seatnum + ticket.seat-1;
-			for(int j=ticket.departure;j<ticket.arrival;j++)
-				seatMap[ticket.route-1][seat][j]=false;
-			return true;
-		} finally {
-			wlock.unlock();
-		}	
+		}else{
+			Lock wlock=lock[ticket.route-1].writeLock();
+			wlock.lock();
+			try {
+				int seat=(ticket.coach-1)*seatnum + ticket.seat-1;
+				for(int j=ticket.departure;j<ticket.arrival;j++)
+					seatMap[ticket.route-1][seat][j]=false;
+				sellTicket.remove(ticket);
+				//System.out.println("退票:票号-"+ticket.tid+",退票成功");
+				return true;
+			} finally {
+				wlock.unlock();
+			}	
+		}
 	}
 }
