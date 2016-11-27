@@ -13,7 +13,7 @@ public class TicketingDS implements TicketingSystem{
 	//private int [][]sellTiketNum;    //关于各个车次每一个经停站有多少票被卖出
 	private Vector<Ticket> sellTicket;
 	private boolean [][][]seatMap;
-	private ReentrantReadWriteLock []lock;
+	private ReentrantReadWriteLock []lock;//读写锁，没一个车次一把
 	private long tid;
 	
 	
@@ -170,7 +170,7 @@ public class TicketingDS implements TicketingSystem{
 			try {
 				int seat=(ticket.coach-1)*seatnum + ticket.seat-1;
 				for(int j=ticket.departure;j<ticket.arrival;j++)
-					seatMap[ticket.route-1][seat][j]=false;
+					seatMap[ticket.route-1][seat][j-1]=false;
 				sellTicket.remove(ticket);
 				//System.out.println("退票:票号-"+ticket.tid+",退票成功");
 				return true;
