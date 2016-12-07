@@ -31,12 +31,6 @@ public class Test {
 					int departure=random.nextInt(stationnum-1)+1;
 					int arrival=departure+random.nextInt(stationnum-departure)+1;
 					tds.inquiry(route, departure, arrival);
-//					System.out.print("代理"+id+"查询,线路为"+route+"始发站"+departure+"终点站"+arrival);
-//					if(res==-1){
-//						System.out.println("  查询失败,查询不合法");
-//					}else{
-//						System.out.println("  查询成功,余票为"+res);
-//					}
 				}
 				
 				for(int i=0;i<3;i++){
@@ -44,26 +38,8 @@ public class Test {
 					int departure=random.nextInt(stationnum-1)+1;
 					int arrival=departure+random.nextInt(stationnum-departure)+1;
 					tds.buyTicket("passenger",route,departure,arrival);
-//					System.out.print("代理"+id+"买票,线路为"+route+"始发站"+departure+"终点站"+arrival);
-//					if(ticket==null){
-//						System.out.println("买票失败");
-//					}else{
-//						System.out.println("买票成功");
-//						//map.put(ticket.tid, ticket);
-//					}
-				}
-				
-			//	System.out.print("代理"+id+"退票");
-//				synchronized (object) {
-//					int num=tds.getSellTicket().size();
-//					tds.refundTicket(tds.getSellTicket().elementAt(random.nextInt(num)));
-//				}
+				}				
 				tds.refundTicket(tds.getSellTicket().getRandomElement(random));
-//				if (res==false){
-//					System.out.println("退票失败");
-//				}else {
-//					System.out.println("退票成功");
-//				}
 				--count;
 			}
 		}
@@ -94,7 +70,6 @@ public class Test {
 	
 	public static void main(String args[]){
 		Test test=new Test();
-		//ExecutorService exec = Executors.newFixedThreadPool(16);
 		int threadNum=16;
 		long startTime= System.currentTimeMillis();//开始时间
 		Thread []thread=new Thread[threadNum];

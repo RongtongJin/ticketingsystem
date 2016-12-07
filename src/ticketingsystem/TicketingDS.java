@@ -13,7 +13,6 @@ public class TicketingDS implements TicketingSystem{
 	private int seatnum;       //每节车厢的座位数
 	private int stationnum;    //每个车次经停站的数量
 	private int sumSeat;       //每个车次列车的总座位数
-	//private int [][]sellTiketNum;    //关于各个车次每一个经停站有多少票被卖出
 	private MyVector<Ticket> sellTicket;
 	private boolean [][][]seatMap;
 	private ReentrantReadWriteLock []lock;//读写锁，没一个车次一把
@@ -33,14 +32,12 @@ public class TicketingDS implements TicketingSystem{
 		seatnum=100;
 		stationnum=10;
 		sumSeat=coachnum*seatnum;
-		//sellTiketNum=new int [routenum][stationnum];
 		lock=new ReentrantReadWriteLock[routenum];
 		sellTicket=new MyVector<Ticket>();
 		for(int i=0;i<routenum;i++){
 			lock[i]=new ReentrantReadWriteLock();
 		}
 		seatMap=new boolean[routenum][sumSeat][stationnum];
-		//Arrays.fill(seatMap, false);
 		for(int i=0;i<routenum;i++){
 			for(int j=0;j<sumSeat;j++){
 				for(int k=0;k<stationnum;k++){
@@ -59,14 +56,12 @@ public class TicketingDS implements TicketingSystem{
 		this.seatnum=seatnum;
 		this.stationnum=stationnum;
 		sumSeat=coachnum*seatnum;
-//		sellTiketNum=new int [routenum][stationnum];
 		sellTicket=new MyVector<Ticket>();
 		lock=new ReentrantReadWriteLock[routenum];
 		for(int i=0;i<routenum;i++){
 			lock[i]=new ReentrantReadWriteLock();
 		}
 		seatMap=new boolean[routenum][sumSeat][stationnum];
-		//Arrays.fill(seatMap, false);
 		for(int i=0;i<routenum;i++){
 			for(int j=0;j<sumSeat;j++){
 				for(int k=0;k<stationnum;k++){
@@ -143,7 +138,6 @@ public class TicketingDS implements TicketingSystem{
 			//System.out.println("查票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",查票失败");
 			return -1;
 		}
-	//	int max=0;
 		int count=0;
 		Lock rlock=lock[route-1].readLock();
 		rlock.lock();
@@ -161,10 +155,6 @@ public class TicketingDS implements TicketingSystem{
 			}
 			//System.out.println("查票:车次-"+route+",起点站-"+departure+",终点站-"+arrival+",余票"+count);
 			return count;
-//			for(int i=departure;i<arrival;i++)  //获取所经过的经停站卖出去的票数最多的数值
-//				max = sellTiketNum[route-1][i-1]>max?  sellTiketNum[route-1][i-1]:max;
-//			return sumSeat-max;
-			
 		} finally {
 			rlock.unlock();
 		}
