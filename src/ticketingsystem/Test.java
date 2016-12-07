@@ -24,7 +24,7 @@ public class Test {
 		public void run() {
 			// TODO Auto-generated method stub
 			Random random =new Random();
-			int count=ExecTimesAThread/10;
+			int count=ExecTimesAThread/10;  //栈封闭
 			while(count>0){
 				for(int i=0;i<6;i++){
 					int route=random.nextInt(routenum)+1;
@@ -54,18 +54,17 @@ public class Test {
 				}
 				
 			//	System.out.print("代理"+id+"退票");
-				synchronized (object) {
-					int num=tds.getSellTicket().size();
-					tds.refundTicket(tds.getSellTicket().elementAt(random.nextInt(num)));
-				}
+//				synchronized (object) {
+//					int num=tds.getSellTicket().size();
+//					tds.refundTicket(tds.getSellTicket().elementAt(random.nextInt(num)));
+//				}
+				tds.refundTicket(tds.getSellTicket().getRandomElement(random));
 //				if (res==false){
 //					System.out.println("退票失败");
 //				}else {
 //					System.out.println("退票成功");
 //				}
-				synchronized (this) {
-					--count;
-				}
+				--count;
 			}
 		}
 	}
@@ -96,7 +95,7 @@ public class Test {
 	public static void main(String args[]){
 		Test test=new Test();
 		//ExecutorService exec = Executors.newFixedThreadPool(16);
-		int threadNum=64;
+		int threadNum=16;
 		long startTime= System.currentTimeMillis();//开始时间
 		Thread []thread=new Thread[threadNum];
 		try {

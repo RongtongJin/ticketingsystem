@@ -1,7 +1,10 @@
 package ticketingsystem;
 
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.locks.*;
+
+
 
 public class TicketingDS implements TicketingSystem{
 	
@@ -11,13 +14,20 @@ public class TicketingDS implements TicketingSystem{
 	private int stationnum;    //每个车次经停站的数量
 	private int sumSeat;       //每个车次列车的总座位数
 	//private int [][]sellTiketNum;    //关于各个车次每一个经停站有多少票被卖出
-	private Vector<Ticket> sellTicket;
+	private MyVector<Ticket> sellTicket;
 	private boolean [][][]seatMap;
 	private ReentrantReadWriteLock []lock;//读写锁，没一个车次一把
 	private long tid;
 	
+	@SuppressWarnings("serial")
+	class MyVector<E> extends Vector<E>{
+		synchronized E getRandomElement(Random random){
+			return this.elementAt(random.nextInt(this.size()));
+		}
+	}
 	
 	public TicketingDS(){  //缺省值
+		tid=0L;
 		routenum=5;
 		coachnum=8;
 		seatnum=100;
@@ -25,7 +35,7 @@ public class TicketingDS implements TicketingSystem{
 		sumSeat=coachnum*seatnum;
 		//sellTiketNum=new int [routenum][stationnum];
 		lock=new ReentrantReadWriteLock[routenum];
-		sellTicket=new Vector<Ticket>();
+		sellTicket=new MyVector<Ticket>();
 		for(int i=0;i<routenum;i++){
 			lock[i]=new ReentrantReadWriteLock();
 		}
@@ -43,13 +53,14 @@ public class TicketingDS implements TicketingSystem{
 	
 	public TicketingDS(int routenum,int coachnum,int seatnum,int stationnum){
 		// TODO Auto-generated constructor stub
+		tid=0L;
 		this.routenum=routenum;
 		this.coachnum=coachnum;
 		this.seatnum=seatnum;
 		this.stationnum=stationnum;
 		sumSeat=coachnum*seatnum;
 //		sellTiketNum=new int [routenum][stationnum];
-		sellTicket=new Vector<Ticket>();
+		sellTicket=new MyVector<Ticket>();
 		lock=new ReentrantReadWriteLock[routenum];
 		for(int i=0;i<routenum;i++){
 			lock[i]=new ReentrantReadWriteLock();
@@ -66,7 +77,7 @@ public class TicketingDS implements TicketingSystem{
 		tid=0;
 	}
 	
-	public Vector<Ticket> getSellTicket(){
+	public MyVector<Ticket> getSellTicket(){
 		return sellTicket;
 	}
 	
@@ -161,7 +172,7 @@ public class TicketingDS implements TicketingSystem{
 
 	@Override
 	public boolean refundTicket(Ticket ticket) {
-		if (!sellTicket.contains(ticket)){ 
+		if (!sellTicket.contains(ticket)){    //????有不有问题
 			//System.out.println("退票:票号-"+ticket.tid+",没有这样的票");
 			return false;
 		}else{
